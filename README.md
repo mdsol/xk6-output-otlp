@@ -1,21 +1,11 @@
-# PROJECT_NAME_HERE
-<!--
+# K6 OTLP Output Extension
 
-Use this section to explain:
-
-* The purpose of this project
-* The business value
-* Any main workflows
-
-Remove these comments as you fill out each section.
--->
+This repository is for [K6 output extension](https://k6.io/docs/extensions/). The extension exports metrics of K6 tests using OTLP/HTTP protocol.
 
 ## Usage
-<!-- Description of main usage workflows and/or link to examples -->
+
+TBD
 
 ## Contributing
-See [CONTRIBUTING](CONTRIBUTING.md).
 
-## Contact
-Visit [DevOps Central](https://devops.imedidata.net/catalog/default/component/<PROJECT_NAME>).
-<!-- Replace <PROJECT_NAME> with the 'name' in the factbook under 'metadata' and wait 24 hours for this project to be available in  DevopsCentral -->
+See [CONTRIBUTING](CONTRIBUTING.md).
