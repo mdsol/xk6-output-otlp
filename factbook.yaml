@@ -9,11 +9,7 @@ metadata:
   json_schema: "https://github.com/mdsol/platform-standards/tree/master/schemas/v1alpha1.schema.json"
   name: xk6-output-otlp
   title: K6 OTLP Output Extension
-  description: K6 output extension for sending metrics to MOTel Collector using OTLP/HTTP protocol. 
-  security:
-    authentication: [none]
-    network_accessiblity: [private]
-    data_types: [infrastructure]
+  description: K6 output extension for exporting metrics using OTLP/HTTP protocol. 
   teams:
     - name: Team 248 (SRE)
       number: 248
