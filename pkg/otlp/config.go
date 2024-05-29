@@ -139,17 +139,6 @@ func envBool(env map[string]string, name string) (null.Bool, error) {
 	return null.NewBool(false, false), nil
 }
 
-func envMap(env map[string]string, prefix string) map[string]string {
-	result := make(map[string]string)
-	for ek, ev := range env {
-		if strings.HasPrefix(ek, prefix) {
-			k := strings.TrimPrefix(ek, prefix)
-			result[k] = ev
-		}
-	}
-	return result
-}
-
 func parseEnvs(env map[string]string) (Config, error) {
 	c := Config{
 		Headers: make(map[string]string),

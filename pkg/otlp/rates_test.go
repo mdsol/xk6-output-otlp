@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	k6m "go.k6.io/k6/metrics"
-	"gotest.tools/v3/assert"
 )
 
 func TestRate(t *testing.T) {
@@ -26,19 +27,25 @@ func TestRate(t *testing.T) {
 
 	r := newRate(sample)
 
-	r.combine(k6m.Sample{
-		Value: 0,
-	})
+	assert.Equal(t, r.value, 1.0)
 
 	r.combine(k6m.Sample{
 		Value: 0,
 	})
+	assert.Equal(t, r.value, 0.5)
+
+	r.combine(k6m.Sample{
+		Value: 0,
+	})
+	assert.Equal(t, r.value, 1.0/3)
 
 	r.combine(k6m.Sample{
 		Value: 1,
 	})
-
-	_ = r.Result()
-
 	assert.Equal(t, r.value, 0.5)
+
+	res := r.Result()
+	require.NotNil(t, res)
+	assert.Equal(t, res.Value, r.value)
+
 }

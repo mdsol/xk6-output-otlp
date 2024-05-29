@@ -77,7 +77,3 @@ It is expected that using conversion to Gauges we get the same results we have i
 For each statistic type of the trend we add `stat` label with appropriate value (`min`, `max`, `avg`, `p90`, etc.).
 
 Conversion a trend to OpenTelemetry histogram is an experimental feature.
-
-## Contributing
-
-See [CONTRIBUTING](CONTRIBUTING.md).

@@ -1,0 +1,25 @@
+run:
+  # Longer timeout
+  timeout: 5m
+
+linters:
+  enable:
+    - errorlint
+    - gocritic
+    - gofmt
+    - goimports
+    - revive
+    - govet
+    - misspell
+    - whitespace
+
+issues:
+  exclude-rules:
+    - linters:
+        - wsl
+      text: "ranges should only be cuddled with assignments used in the iteration"
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/mdsol/motel-collector
+
