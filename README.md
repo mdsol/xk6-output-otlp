@@ -14,7 +14,7 @@ This repository is for [K6 output extension](https://k6.io/docs/extensions/). Th
 6. Run tests with it using `--out otlp` flag, like
 
    ```sh
-   make build && ./bin/k6 run --out otlp --config ./.local/samples/config.json  ./samples/test.js
+   make build && ./bin/k6 run --out otlp --config ./samples/config.json ./samples/test.js
    ```
 
 ### Configuration
