@@ -1,0 +1,14 @@
+{
+	"collectors": {
+		"otlp": {
+			"metrics_url": "https://motel-collector-sandbox-metrics.telemetry.nonprod-medidata.net/v1/metrics",
+			"headers": {
+				"job": "tests"
+			},
+			"push_interval": "1m",
+			"timeout": "3s",
+			"gzip": true,
+			"insecure": false
+		}
+	}
+}

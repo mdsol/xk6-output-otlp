@@ -1,4 +1,6 @@
-# Contributing
+# K6 OTLP Extension
+
+This [OUTPUT K6 extension](https://k6.io/docs/extensions/) is for exporting K6 test metrics using OTLP/HTTP protocol.
 
 ## Building extended K6 binary
 
@@ -7,7 +9,7 @@
 3. Clone repository into a new folder.
 4. Go to `k6` subfolder of the new folder.
 5. Build the extension with `make build` command. Find new K6 binary in `./bin` subfolder.
-6. Run tests with it using `--out otlp-collector` flag.
+6. Run tests with it using `--out otlp` flag.
 
 ## Configuration
 
@@ -41,7 +43,7 @@ Environment variables:
 | `K6_OTLP_HTTP_HEADERS`     | Optional HTTP headers |
 | `K6_OTLP_INSECURE`         | `true` or `false`. Validate SSL certificate or not. |
 | `K6_OTLP_PUSH_INTERVAL`    | Metric push interval in Go duration format for intermediate metrics. At the end on the test metrics exported regardless of this value. |
-| `K6_OTLP_SERVER_URL`       | MOTel Collector metrics endpoint url. Usually ends with `/v1/metrics` |
+| `K6_OTLP_SERVER_URL`       | Endpoint url. Usually ends with `/v1/metrics` |
 | `K6_OTLP_TIMEOUT`          | HTTP request timeout  in Go duration format |
 | `K6_OTLP_TREND_CONVERSION` | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
 
@@ -56,9 +58,9 @@ make build
 ./bin/k6 run --out otlp --config ./samples/config.json  ./samples/test.js
 ```
 
-## K6 Metrics Conversion
+## K6 Metrics in Vision
 
-The Grafana K6 testing utility uses a metric model that requires some metrics conversion before sending to Opentelemetry Collector or other OTLP receiver.
+The Grafana K6 testing utility uses a metric model that requires some metrics conversion before sending to OTLP collector.
 
 ### Rate
 
