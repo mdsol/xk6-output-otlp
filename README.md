@@ -11,7 +11,11 @@ This repository is for [K6 output extension](https://k6.io/docs/extensions/). Th
 3. Clone repository into a new folder.
 4. Go to `k6` subfolder of the new folder.
 5. Build the extension with `make build` command. Find new K6 binary in `./bin` subfolder.
-6. Run tests with it using `--out otlp-collector` flag.
+6. Run tests with it using `--out otlp` flag, like
+
+   ```sh
+   make build && ./bin/k6 run --out otlp --config ./.local/samples/config.json  ./samples/test.js
+   ```
 
 ### Configuration
 
