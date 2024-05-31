@@ -9,7 +9,7 @@
 			"timeout": "3s",
 			"gzip": true,
 			"insecure": true,
-      "trend_conversion": "gauges"
+			"trend_conversion": "gauges"
 		}
 	}
 }

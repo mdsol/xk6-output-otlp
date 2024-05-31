@@ -9,7 +9,7 @@ This repository is for [K6 output extension](https://k6.io/docs/extensions/). Th
 1. [Download and install Go](https://go.dev/doc/install) if required.
 2. [Install XK6 tool](https://github.com/grafana/xk6/?tab=readme-ov-file#install-xk6)
 3. Clone repository into a new folder.
-4. Go to `k6` subfolder of the new folder.
+4. Go to the new folder.
 5. Build the extension with `make build` command. Find new K6 binary in `./bin` subfolder.
 6. Run tests with it using `--out otlp` flag, like
 
@@ -49,7 +49,7 @@ Environment variables:
 | `K6_OTLP_HTTP_HEADERS`     | Optional HTTP headers |
 | `K6_OTLP_INSECURE`         | `true` or `false`. Validate SSL certificate or not. |
 | `K6_OTLP_PUSH_INTERVAL`    | Metric push interval in Go duration format for intermediate metrics. At the end on the test metrics exported regardless of this value. |
-| `K6_OTLP_SERVER_URL`       | MOTel Collector metrics endpoint url. Usually ends with `/v1/metrics` |
+| `K6_OTLP_SERVER_URL`       | OTLP metrics endpoint url. Usually ends with `/v1/metrics` |
 | `K6_OTLP_TIMEOUT`          | HTTP request timeout  in Go duration format |
 | `K6_OTLP_TREND_CONVERSION` | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
 
