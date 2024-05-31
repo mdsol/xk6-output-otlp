@@ -18,9 +18,9 @@ type wrapper interface {
 	apply(context.Context, logrus.FieldLogger, *k6m.Sample) error
 }
 
-func newWrapper(_ logrus.FieldLogger, s k6m.Sample, script string, trendConversion string) (wrapper, error) {
+func newWrapper(_ logrus.FieldLogger, s k6m.Sample, conf *Config) (wrapper, error) {
 	var err error
-	retval := &omWrapper{script: script}
+	retval := &omWrapper{script: conf.Script}
 
 	switch s.Metric.Type {
 	case k6m.Counter:
@@ -32,16 +32,20 @@ func newWrapper(_ logrus.FieldLogger, s k6m.Sample, script string, trendConversi
 	case k6m.Gauge:
 		fallthrough
 	case k6m.Rate:
-		retval.metric, err = meter.Float64Gauge(s.Metric.Name)
+		if conf.RateConversion.String == "gauge" {
+			retval.metric, err = meter.Float64Gauge(s.Metric.Name)
+		} else {
+			retval.metric, err = meter.Float64Counter(s.Metric.Name)
+		}
 	case k6m.Trend:
 		if s.Metric.Contains == k6m.Time {
-			if trendConversion == "histogram" {
+			if conf.TrendConversion.String == "histogram" {
 				retval.metric, err = meter.Float64Histogram(s.Metric.Name, om.WithUnit("ms"))
 			} else {
 				retval.metric, err = meter.Float64Gauge(s.Metric.Name, om.WithUnit("ms"))
 			}
 		} else {
-			if trendConversion == "histogram" {
+			if conf.TrendConversion.String == "histogram" {
 				retval.metric, err = meter.Int64Histogram(s.Metric.Name, om.WithUnit("1"))
 			} else {
 				retval.metric, err = meter.Int64Gauge(s.Metric.Name, om.WithUnit("1"))
@@ -92,6 +96,11 @@ func (w *omWrapper) apply(ctx context.Context, _ logrus.FieldLogger, s *k6m.Samp
 		fgauge, ok = w.metric.(om.Float64Gauge)
 		if ok {
 			fgauge.Record(ctx, s.Value, om.WithAttributes(attrs...))
+		} else {
+			fcounter, ok := w.metric.(om.Float64Counter)
+			if ok {
+				fcounter.Add(ctx, s.Value, om.WithAttributes(attrs...))
+			}
 		}
 	case k6m.Trend:
 		if s.Metric.Contains == k6m.Time {

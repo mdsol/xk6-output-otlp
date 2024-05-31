@@ -35,6 +35,7 @@ Example of configuration file:
       "timeout": "3s",
       "gzip": true,
       "insecure": true,
+      "rate_conversion": "counters",
       "trend_conversion": "gauges"
     }
   }
@@ -50,6 +51,7 @@ Environment variables:
 | `K6_OTLP_INSECURE`         | `true`        | `true` or `false`. Validate SSL certificate or not. |
 | `K6_OTLP_PUSH_INTERVAL`    | `5s`          | Metric push interval in Go duration format for intermediate metrics. At the end on the test metrics exported regardless of this value. |
 | `K6_OTLP_TIMEOUT`          | `5s`          | HTTP request timeout  in Go duration format |
+| `K6_OTLP_RATE_CONVERSION`  | `counters`    | `counters` or `gauge`. Conversion type for metrics of type `rate`. |
 | `K6_OTLP_TREND_CONVERSION` | `gauges`      | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
 | `K6_OTLP_SERVER_URL`       | `http://localhost:8080/v1/metrics`| OTLP metrics endpoint url. Usually ends with `/v1/metrics` |
 
@@ -70,8 +72,16 @@ The Grafana K6 testing utility uses a metric model that requires some metrics co
 
 #### Rate
 
-A metric of type "rate", which internally is a sequence of samples of 0 and 1 values, is converted to a float gauge.
-The value is `sum/count`.
+A metric of type "rate" could be converted to a collection of counters (default) or a gauge, depending on the test configuration.
+
+If the rate type conversion is `counter`, the converted metric is a pair of counters withe labels "value=0|1".
+To calculate actual rate value, in this case we need to make an equation:
+
+```text
+rate = rate(counter{value==1} / (counter{value==1} + counter{value==0}))
+```
+
+If the rate type conversion is `gauge`, the result metric is a float gauge which value is pre-calculated.
 
 #### Trend
 

@@ -34,7 +34,7 @@ type Output struct {
 
 	ctx             context.Context
 	logger          logrus.FieldLogger
-	config          Config
+	config          *Config
 	now             func() time.Time
 	periodicFlusher *output.PeriodicFlusher
 	tsdb            map[k6m.TimeSeries]wrapper
@@ -87,7 +87,7 @@ func New(params output.Params) (*Output, error) {
 		ctx:    context.Background(),
 		logger: params.Logger,
 		client: exp,
-		config: conf,
+		config: &conf,
 		now:    time.Now,
 		tsdb:   make(map[k6m.TimeSeries]wrapper),
 	}
@@ -174,12 +174,12 @@ func (o *Output) flush() {
 func (o *Output) applyMetrics(samplesContainers []k6m.SampleContainer) {
 	var err error
 
-	samples := joinRates(flatten(samplesContainers))
+	samples := joinRates(flatten(samplesContainers), o.config.RateConversion.String)
 
 	for _, s := range samples {
 		w, found := o.tsdb[s.TimeSeries]
 		if !found {
-			w, err = newWrapper(o.logger, s, o.config.Script, o.config.TrendConversion.String)
+			w, err = newWrapper(o.logger, s, o.config)
 			if err != nil {
 				o.logger.Errorf("Unable to wrap %s:[%v] metric\n", s.Metric.Name, s.Metric.Type)
 				continue

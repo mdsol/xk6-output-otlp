@@ -17,6 +17,7 @@ const (
 	defaultServerURL       = "http://localhost:8080/v1/metrics"
 	defaultTimeout         = 5 * time.Second
 	defaultPushInterval    = 5 * time.Second
+	defaultRateConversion  = "counters"
 	defaultTrendConversion = "gauges"
 	defaultMetricPrefix    = "k6_"
 )
@@ -28,6 +29,7 @@ type Config struct {
 	Timeout         types.NullDuration `json:"timeout"`
 	GZip            null.Bool          `json:"gzip"`
 	Insecure        null.Bool          `json:"insecure"`
+	RateConversion  null.String        `json:"rate_conversion"`
 	TrendConversion null.String        `json:"trend_conversion"`
 	Script          string             `json:"-"`
 }
@@ -95,6 +97,10 @@ func (c Config) Apply(applied Config) Config {
 		c.GZip = applied.GZip
 	}
 
+	if applied.RateConversion.Valid {
+		c.RateConversion = applied.RateConversion
+	}
+
 	if applied.TrendConversion.Valid {
 		c.TrendConversion = applied.TrendConversion
 	}
@@ -118,6 +124,10 @@ func joinConfig(jsonRawConf json.RawMessage, env map[string]string) (Config, err
 			return result, fmt.Errorf("parse environment variables options failed: %s", err.Error())
 		}
 		result = result.Apply(envConf)
+	}
+
+	if result.RateConversion.String != "gauge" && result.RateConversion.String != "counters" {
+		return result, fmt.Errorf("invalid rate conversion: %s, must be 'gauge' or 'counters'", result.RateConversion.String)
 	}
 
 	if result.TrendConversion.String != "gauges" && result.TrendConversion.String != "histogram" {
@@ -172,6 +182,10 @@ func parseEnvs(env map[string]string) (Config, error) {
 
 	if convtype, defined := env["K6_OTLP_TREND_CONVERSION"]; defined {
 		c.TrendConversion = null.StringFrom(convtype)
+	}
+
+	if convtype, defined := env["K6_OTLP_RATE_CONVERSION"]; defined {
+		c.RateConversion = null.StringFrom(convtype)
 	}
 
 	if headers, headersDefined := env["K6_OTLP_HTTP_HEADERS"]; headersDefined {

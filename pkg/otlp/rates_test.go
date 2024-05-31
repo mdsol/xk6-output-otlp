@@ -27,25 +27,30 @@ func TestRate(t *testing.T) {
 
 	r := newRate(sample)
 
-	assert.Equal(t, r.value, 1.0)
+	assert.Equal(t, r.value(), 1.0)
 
 	r.combine(k6m.Sample{
 		Value: 0,
 	})
-	assert.Equal(t, r.value, 0.5)
+	assert.Equal(t, r.value(), 0.5)
 
 	r.combine(k6m.Sample{
 		Value: 0,
 	})
-	assert.Equal(t, r.value, 1.0/3)
+	assert.Equal(t, r.value(), 1.0/3)
 
 	r.combine(k6m.Sample{
 		Value: 1,
 	})
-	assert.Equal(t, r.value, 0.5)
+	assert.Equal(t, r.value(), 0.5)
 
-	res := r.Result()
-	require.NotNil(t, res)
-	assert.Equal(t, res.Value, r.value)
+	res := r.Result("counters")
+	require.Len(t, res, 2)
+	assert.Equal(t, res[0].Value, r.sum)
+	assert.Equal(t, res[1].Value, r.count-r.sum)
+
+	res = r.Result("gauge")
+	require.Len(t, res, 1)
+	assert.Equal(t, res[0].Value, r.value())
 
 }

@@ -9,11 +9,15 @@ import (
 
 type rate struct {
 	first *k6m.Sample
-	value float64
+	sum   float64
 	count float64
 }
 
-func joinRates(samples []k6m.Sample) []k6m.Sample {
+func (r *rate) value() float64 {
+	return r.sum / r.count
+}
+
+func joinRates(samples []k6m.Sample, rateConversion string) []k6m.Sample {
 	retval := []k6m.Sample{}
 	rates := map[string]*rate{}
 
@@ -39,8 +43,8 @@ func joinRates(samples []k6m.Sample) []k6m.Sample {
 	}
 
 	for k, v := range rates {
-		retval = append(retval, v.Result())
-		logger.WithField("key", k).WithField("value", v.value).Debug("RATE")
+		retval = append(retval, v.Result(rateConversion)...)
+		logger.WithField("key", k).WithField("value", v.value()).Debug("RATE")
 	}
 
 	logger.Debugf("SAMPLES before %d after %d", len(samples), len(retval))
@@ -48,26 +52,60 @@ func joinRates(samples []k6m.Sample) []k6m.Sample {
 }
 
 func (r *rate) combine(sample k6m.Sample) float64 {
-	val := (r.value*r.count + sample.Value) / (r.count + 1.0)
 	r.count += 1.0
-	r.value = val
-	return r.value
+	r.sum += sample.Value
+	return r.value()
 }
 
-func (r *rate) Result() k6m.Sample {
-	return k6m.Sample{
-		TimeSeries: k6m.TimeSeries{
-			Metric: &k6m.Metric{
-				Name:     r.first.Metric.Name + "_rate",
-				Type:     k6m.Gauge,
-				Contains: k6m.Default,
-				Sink:     &k6m.GaugeSink{},
+func (r *rate) Result(rateConversion string) []k6m.Sample {
+	if rateConversion == "counters" {
+		return []k6m.Sample{
+			{
+				TimeSeries: k6m.TimeSeries{
+					Metric: &k6m.Metric{
+						Name:     r.first.Metric.Name,
+						Type:     k6m.Counter,
+						Contains: k6m.Default,
+						Sink:     &k6m.CounterSink{},
+					},
+					Tags: r.first.Tags.With("value", "1"),
+				},
+				Metadata: r.first.Metadata,
+				Time:     r.first.Time,
+				Value:    r.sum,
 			},
-			Tags: r.first.Tags,
-		},
-		Metadata: r.first.Metadata,
-		Time:     r.first.Time,
-		Value:    r.value,
+			{
+				TimeSeries: k6m.TimeSeries{
+					Metric: &k6m.Metric{
+						Name:     r.first.Metric.Name,
+						Type:     k6m.Counter,
+						Contains: k6m.Default,
+						Sink:     &k6m.CounterSink{},
+					},
+					Tags: r.first.Tags.With("value", "0"),
+				},
+				Metadata: r.first.Metadata,
+				Time:     r.first.Time,
+				Value:    r.count - r.sum,
+			},
+		}
+	} else {
+		return []k6m.Sample{
+			{
+				TimeSeries: k6m.TimeSeries{
+					Metric: &k6m.Metric{
+						Name:     r.first.Metric.Name + "_rate",
+						Type:     k6m.Gauge,
+						Contains: k6m.Default,
+						Sink:     &k6m.GaugeSink{},
+					},
+					Tags: r.first.Tags,
+				},
+				Metadata: r.first.Metadata,
+				Time:     r.first.Time,
+				Value:    r.value(),
+			},
+		}
 	}
 }
 
@@ -75,7 +113,7 @@ func newRate(sample *k6m.Sample) *rate {
 	return &rate{
 		first: sample,
 		count: 1.0,
-		value: sample.Value,
+		sum:   sample.Value,
 	}
 }
 
