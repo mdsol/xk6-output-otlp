@@ -11,10 +11,10 @@ This repository is for [K6 output extension](https://k6.io/docs/extensions/). Th
 3. Clone repository into a new folder.
 4. Go to the new folder.
 5. Build the extension with `make build` command. Find new K6 binary in `./bin` subfolder.
-6. Run tests with it using `--out otlp` flag, like
+6. Run K6 tests with it using `--out otlp` flag, like
 
    ```sh
-   make build && ./bin/k6 run --out otlp --config ./samples/config.json ./samples/test.js
+   ./bin/k6 run --out otlp --config ./samples/config.json ./samples/test.js
    ```
 
 ### Configuration
@@ -53,13 +53,7 @@ Environment variables:
 | `K6_OTLP_TREND_CONVERSION` | `gauges`      | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
 | `K6_OTLP_SERVER_URL`       | `http://localhost:8080/v1/metrics`| OTLP metrics endpoint url. Usually ends with `/v1/metrics` |
 
-For local development, to see if K6 sends output, you can use any local HTTP listener like MOTelCollector or just run:
-
-```sh
-nc -l -k -p 8080
-```
-
-### Run Tests
+### Run K6 Tests
 
 Example:
 
@@ -76,8 +70,8 @@ The Grafana K6 testing utility uses a metric model that requires some metrics co
 
 #### Rate
 
-A metric of type "rate", which internally is a sequence of 0 and 1 values, is converted to float gauge.
-The values is `sum/count` of measures.
+A metric of type "rate", which internally is a sequence of samples of 0 and 1 values, is converted to a float gauge.
+The value is `sum/count`.
 
 #### Trend
 
