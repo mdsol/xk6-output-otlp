@@ -43,15 +43,21 @@ Example of configuration file:
 
 Environment variables:
 
-| Environment Variable       | Description |
-|-------------------------   |-------------|
-| `K6_OTLP_GZIP`             | `true` or `false`. Use GZIP encoding or not.  |
-| `K6_OTLP_HTTP_HEADERS`     | Optional HTTP headers |
-| `K6_OTLP_INSECURE`         | `true` or `false`. Validate SSL certificate or not. |
-| `K6_OTLP_PUSH_INTERVAL`    | Metric push interval in Go duration format for intermediate metrics. At the end on the test metrics exported regardless of this value. |
-| `K6_OTLP_SERVER_URL`       | OTLP metrics endpoint url. Usually ends with `/v1/metrics` |
-| `K6_OTLP_TIMEOUT`          | HTTP request timeout  in Go duration format |
-| `K6_OTLP_TREND_CONVERSION` | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
+| Environment Variable       | Default Value | Description |
+|----------------------------|---------------|-------------|
+| `K6_OTLP_GZIP`             | `false`       | `true` or `false`. Use GZIP encoding or not.  |
+| `K6_OTLP_HTTP_HEADERS`     | empty         | Optional HTTP headers |
+| `K6_OTLP_INSECURE`         | `true`        | `true` or `false`. Validate SSL certificate or not. |
+| `K6_OTLP_PUSH_INTERVAL`    | `5s`          | Metric push interval in Go duration format for intermediate metrics. At the end on the test metrics exported regardless of this value. |
+| `K6_OTLP_TIMEOUT`          | `5s`          | HTTP request timeout  in Go duration format |
+| `K6_OTLP_TREND_CONVERSION` | `gauges`      | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
+| `K6_OTLP_SERVER_URL`       | `http://localhost:8080/v1/metrics`| OTLP metrics endpoint url. Usually ends with `/v1/metrics` |
+
+For local development, to see if K6 sends output, you can use any local HTTP listener like MOTelCollector or just run:
+
+```sh
+nc -l -k -p 8080
+```
 
 ### Run Tests
 
