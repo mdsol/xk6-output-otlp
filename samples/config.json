@@ -1,0 +1,16 @@
+{
+	"collectors": {
+		"otlp": {
+			"metrics_url": "http://localhost:8080/v1/metrics",
+			"headers": {
+				"job": "tests"
+			},
+			"push_interval": "1m",
+			"timeout": "3s",
+			"gzip": true,
+			"insecure": true,
+			"rate_conversion": "gauge",
+			"trend_conversion": "gauges"
+		}
+	}
+}
