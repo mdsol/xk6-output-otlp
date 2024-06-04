@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mdsol/xk6-output-otlp/pkg/exporter"
+
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -42,6 +43,7 @@ type Output struct {
 	client   *omhttp.Exporter
 	runCount om.Int64Counter
 	down     *atomic.Bool
+	ids      *idAttrs
 }
 
 func New(params output.Params) (*Output, error) {
@@ -70,6 +72,7 @@ func New(params output.Params) (*Output, error) {
 		"insecure":     conf.Insecure.Bool,
 		"timeout":      conf.Timeout,
 		"headers":      conf.Headers,
+		"add_ids":      conf.AddIDAttributes,
 	}
 	params.Logger.WithFields(fields).Debug("OTEL Config")
 
@@ -80,7 +83,16 @@ func New(params output.Params) (*Output, error) {
 
 	exp, err := exporter.New(expconf)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to initialize the OTLP exporter: %w", err)
+		return nil, fmt.Errorf("Failed to initialize the OTLP exporter: %s", err.Error())
+	}
+
+	var ids *idAttrs
+
+	if conf.AddIDAttributes.Bool {
+		ids, err = newIdentities()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to initialize ID attributes: %s", err.Error())
+		}
 	}
 
 	o := &Output{
@@ -90,6 +102,7 @@ func New(params output.Params) (*Output, error) {
 		config: &conf,
 		now:    time.Now,
 		tsdb:   make(map[k6m.TimeSeries]wrapper),
+		ids:    ids,
 	}
 	reader = ocm.NewPeriodicReader(exp,
 		ocm.WithInterval(conf.PushInterval.TimeDuration()),
@@ -179,7 +192,7 @@ func (o *Output) applyMetrics(samplesContainers []k6m.SampleContainer) {
 	for _, s := range samples {
 		w, found := o.tsdb[s.TimeSeries]
 		if !found {
-			w, err = newWrapper(o.logger, s, o.config)
+			w, err = newWrapper(o.logger, s, o.config, o.ids)
 			if err != nil {
 				o.logger.Errorf("Unable to wrap %s:[%v] metric\n", s.Metric.Name, s.Metric.Type)
 				continue

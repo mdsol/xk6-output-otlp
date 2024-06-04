@@ -36,7 +36,9 @@ Example of configuration file:
       "gzip": true,
       "insecure": true,
       "rate_conversion": "counters",
-      "trend_conversion": "gauges"
+      "trend_conversion": "gauges",
+      // If 'true', we add attributes/labels 'provider_id' and 'run_id'
+      "add_id_attributes": true
     }
   }
 }
@@ -46,6 +48,7 @@ Environment variables:
 
 | Environment Variable       | Default Value | Description |
 |----------------------------|---------------|-------------|
+| `K6_OTLP_ADD_ID_ATTRS`     | `false`       | If `true`, attributes `provider_id` and `run_id` added to metrics. |
 | `K6_OTLP_GZIP`             | `false`       | `true` or `false`. Use GZIP encoding or not.  |
 | `K6_OTLP_HTTP_HEADERS`     | empty         | Optional HTTP headers |
 | `K6_OTLP_INSECURE`         | `true`        | `true` or `false`. Validate SSL certificate or not. |
@@ -91,3 +94,16 @@ It is expected that using conversion to Gauges we get the same results we have i
 For each statistic type of the trend we add `stat` label with appropriate value (`min`, `max`, `avg`, `p90`, etc.).
 
 Conversion a trend to OpenTelemetry histogram is an experimental feature.
+
+#### Attributes
+
+Some time it is required to distinguish metrics received from different test runs. For this scenario we have
+a configuration option that adds the following attributes/labels to the metrics:
+
+| Attribute     | Meaning |
+|---------------|---------|
+| `provider_id` | A random string. Expected to be the same for the same running location (host, user) |
+| `run_id`      | A cyclic counter 0..255 indicates the test run. We should limit the range for avoiding high-cardinality. |
+
+To insert attributes, set environment variable `K6_OTLP_ADD_ID_ATTRS=true`
+or set `add_id_attributes: true` in the config file.

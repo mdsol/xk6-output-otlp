@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mdsol/xk6-output-otlp/pkg/exporter"
+
 	"go.k6.io/k6/lib/types"
 	"gopkg.in/guregu/null.v3"
 )
@@ -23,25 +24,28 @@ const (
 )
 
 type Config struct {
-	ServerURL       null.String        `json:"metrics_url"`
-	Headers         map[string]string  `json:"headers"`
-	PushInterval    types.NullDuration `json:"push_interval"`
-	Timeout         types.NullDuration `json:"timeout"`
+	AddIDAttributes null.Bool          `json:"add_id_attributes"`
 	GZip            null.Bool          `json:"gzip"`
+	Headers         map[string]string  `json:"headers"`
 	Insecure        null.Bool          `json:"insecure"`
+	PushInterval    types.NullDuration `json:"push_interval"`
 	RateConversion  null.String        `json:"rate_conversion"`
-	TrendConversion null.String        `json:"trend_conversion"`
 	Script          string             `json:"-"`
+	ServerURL       null.String        `json:"metrics_url"`
+	Timeout         types.NullDuration `json:"timeout"`
+	TrendConversion null.String        `json:"trend_conversion"`
 }
 
 func NewConfig() Config {
 	return Config{
-		ServerURL:       null.StringFrom(defaultServerURL),
-		PushInterval:    types.NullDurationFrom(defaultPushInterval),
-		Timeout:         types.NullDurationFrom(defaultTimeout),
-		Headers:         make(map[string]string),
+		AddIDAttributes: null.BoolFrom(false),
 		GZip:            null.BoolFrom(false),
 		Insecure:        null.BoolFrom(true),
+
+		PushInterval:    types.NullDurationFrom(defaultPushInterval),
+		ServerURL:       null.StringFrom(defaultServerURL),
+		Headers:         make(map[string]string),
+		Timeout:         types.NullDurationFrom(defaultTimeout),
 		TrendConversion: null.StringFrom(defaultTrendConversion),
 	}
 }
@@ -95,6 +99,10 @@ func (c Config) Apply(applied Config) Config {
 
 	if applied.GZip.Valid {
 		c.GZip = applied.GZip
+	}
+
+	if applied.AddIDAttributes.Valid {
+		c.AddIDAttributes = applied.AddIDAttributes
 	}
 
 	if applied.RateConversion.Valid {
@@ -162,6 +170,11 @@ func parseEnvs(env map[string]string) (Config, error) {
 	gzip, err := envBool(env, "K6_OTLP_GZIP")
 	if err == nil {
 		c.GZip = gzip
+	}
+
+	add, err := envBool(env, "K6_OTLP_ADD_ID_ATTRS")
+	if err == nil {
+		c.AddIDAttributes = add
 	}
 
 	if timeout, defined := env["K6_OTLP_TIMEOUT"]; defined {
