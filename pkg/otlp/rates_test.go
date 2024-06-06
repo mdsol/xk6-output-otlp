@@ -52,5 +52,4 @@ func TestRate(t *testing.T) {
 	res = r.Result("gauge")
 	require.Len(t, res, 1)
 	assert.Equal(t, res[0].Value, r.value())
-
 }

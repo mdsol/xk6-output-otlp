@@ -18,9 +18,9 @@ type wrapper interface {
 	apply(context.Context, logrus.FieldLogger, *k6m.Sample) error
 }
 
-func newWrapper(_ logrus.FieldLogger, s k6m.Sample, conf *Config) (wrapper, error) {
+func newWrapper(_ logrus.FieldLogger, s k6m.Sample, conf *Config, ids *idAttrs) (wrapper, error) {
 	var err error
-	retval := &omWrapper{script: conf.Script}
+	retval := &omWrapper{script: conf.Script, ids: ids}
 
 	switch s.Metric.Type {
 	case k6m.Counter:
@@ -66,6 +66,7 @@ type omWrapper struct {
 	id     int
 	metric any
 	script string
+	ids    *idAttrs
 }
 
 func (w *omWrapper) apply(ctx context.Context, _ logrus.FieldLogger, s *k6m.Sample) error {
@@ -151,6 +152,13 @@ func (w *omWrapper) attributes(tags *k6m.TagSet) []attribute.KeyValue {
 		if key != "__name__" {
 			retval = append(retval, attribute.String(key, value))
 		}
+	}
+
+	if w.ids != nil {
+		retval = append(retval,
+			attribute.String("provider_id", w.ids.providerID),
+			attribute.Int("run_id", int(w.ids.runID)),
+		)
 	}
 
 	return retval

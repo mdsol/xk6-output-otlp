@@ -4,18 +4,18 @@ This repository is for [K6 output extension](https://k6.io/docs/extensions/). Th
 
 ## Usage
 
-### Building extended K6 binary
+The released binary is expected to run in containers or linux-like hosts of `amd64` architecture.
+For Windows 10+ environments you can run it in  WSL2.
+For other environments, please build your version from sources.
 
-1. [Download and install Go](https://go.dev/doc/install) if required.
-2. [Install XK6 tool](https://github.com/grafana/xk6/?tab=readme-ov-file#install-xk6)
-3. Clone repository into a new folder.
-4. Go to the new folder.
-5. Build the extension with `make build` command. Find new K6 binary in `./bin` subfolder.
-6. Run K6 tests with it using `--out otlp` flag, like
+### Get the pre-build extended K6 binary
 
-   ```sh
-   ./bin/k6 run --out otlp --config ./samples/config.json ./samples/test.js
-   ```
+- Find the [latest release}(https://github.com/mdsol/xk6-output-otlp/releases).
+- Download `k6.tar.gz` archive, and extract the `k6` binary with
+
+  ```sh
+  tar -xvzf k6.tar.gz
+  ```
 
 ### Configuration
 
@@ -36,7 +36,8 @@ Example of configuration file:
       "gzip": true,
       "insecure": true,
       "rate_conversion": "counters",
-      "trend_conversion": "gauges"
+      "trend_conversion": "gauges",
+      "add_id_attributes": true
     }
   }
 }
@@ -46,6 +47,7 @@ Environment variables:
 
 | Environment Variable       | Default Value | Description |
 |----------------------------|---------------|-------------|
+| `K6_OTLP_ADD_ID_ATTRS`     | `false`       | If `true`, attributes `provider_id` and `run_id` added to metrics. |
 | `K6_OTLP_GZIP`             | `false`       | `true` or `false`. Use GZIP encoding or not.  |
 | `K6_OTLP_HTTP_HEADERS`     | empty         | Optional HTTP headers |
 | `K6_OTLP_INSECURE`         | `true`        | `true` or `false`. Validate SSL certificate or not. |
@@ -55,22 +57,17 @@ Environment variables:
 | `K6_OTLP_TREND_CONVERSION` | `gauges`      | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
 | `K6_OTLP_SERVER_URL`       | `http://localhost:8080/v1/metrics`| OTLP metrics endpoint url. Usually ends with `/v1/metrics` |
 
-### Run K6 Tests
+### Run K6 tests like
 
-Example:
+  ```sh
+  ./k6 run --out otlp --config <config-file> <test-file>
+  ```
 
-```sh
-# Build for the first time
-make build
-# From 
-./bin/k6 run --out otlp --config ./samples/config.json  ./samples/test.js
-```
-
-### K6 Metrics Conversion
+## K6 Metrics Conversion
 
 The Grafana K6 testing utility uses a metric model that requires some metrics conversion before sending to Opentelemetry Collector or other OTLP receiver.
 
-#### Rate
+### Rate
 
 A metric of type "rate" could be converted to a collection of counters (default) or a gauge, depending on the test configuration.
 
@@ -83,7 +80,7 @@ rate = rate(counter{value==1} / (counter{value==1} + counter{value==0}))
 
 If the rate type conversion is `gauge`, the result metric is a float gauge which value is pre-calculated.
 
-#### Trend
+### Trend
 
 A metric of type "trend" could be converted to a collection of gauges (default) or a histogram, depending on the test configuration.
 
@@ -91,3 +88,30 @@ It is expected that using conversion to Gauges we get the same results we have i
 For each statistic type of the trend we add `stat` label with appropriate value (`min`, `max`, `avg`, `p90`, etc.).
 
 Conversion a trend to OpenTelemetry histogram is an experimental feature.
+
+### Attributes
+
+Sometimes it's required to distinguish metrics received from different test runs. For this scenario we have
+a configuration option that adds the following attributes/labels to the metrics:
+
+| Attribute     | Meaning |
+|---------------|---------|
+| `provider_id` | Initially, a random generated string. Expected to be the same for the same running location (host, user) |
+| `run_id`      | A cyclic counter 0..255 indicates the test run. We should limit the range for avoiding high-cardinality. |
+
+To insert attributes, set environment variable `K6_OTLP_ADD_ID_ATTRS=true`
+or set `add_id_attributes: true` in the config file.
+
+#### Using of meaningful provider_id
+
+You can update your local file `~/.xk6-output-otlp/provider_id` by changing the randomly generated id to
+something meaningful (your hostname or username, etc.).
+The new id should be unique and match pattern `^[0-9a-zA-Z_]{3,16}$`.
+
+## Contributing
+
+See [CONTRIBUTING](./CONTRIBUTING.md)
+
+## Contact
+
+See the [factbook](factbook.yaml).
