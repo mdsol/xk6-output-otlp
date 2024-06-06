@@ -4,19 +4,17 @@ This repository is for [K6 output extension](https://k6.io/docs/extensions/). Th
 
 ## Usage
 
-Get the Extended K6 Binary
+The released binary is expected to run in containers or linux-like hosts of `amd64` architecture.
+For Windows 10+ environments you can run it in  WSL2.
+For other environments, please build your version from sources.
+
+### Get the pre-build extended K6 binary
 
 - Find the [latest release}(https://github.com/mdsol/xk6-output-otlp/releases).
 - Download `k6.tar.gz` archive, and extract the `k6` binary with
 
   ```sh
   tar -xvzf k6.tar.gz
-  ```
-
-- Run K6 tests like
-
-  ```sh
-  ./k6 run --out otlp --config <config-file> <test-file>
   ```
 
 ### Configuration
@@ -58,6 +56,12 @@ Environment variables:
 | `K6_OTLP_RATE_CONVERSION`  | `counters`    | `counters` or `gauge`. Conversion type for metrics of type `rate`. |
 | `K6_OTLP_TREND_CONVERSION` | `gauges`      | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
 | `K6_OTLP_SERVER_URL`       | `http://localhost:8080/v1/metrics`| OTLP metrics endpoint url. Usually ends with `/v1/metrics` |
+
+### Run K6 tests like
+
+  ```sh
+  ./k6 run --out otlp --config <config-file> <test-file>
+  ```
 
 ## K6 Metrics Conversion
 
