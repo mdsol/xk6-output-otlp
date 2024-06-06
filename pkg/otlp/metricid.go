@@ -139,8 +139,6 @@ func readID(path string, provider bool) (string, []string, error) {
 			if rx := regexp.MustCompile(providerIDPattern); !rx.Match([]byte(id)) {
 				return "", comments, fmt.Errorf("incorrect provider_id, must match /%s/ pattern", providerIDPattern)
 			}
-		} else {
-
 		}
 
 		return id, comments, nil
