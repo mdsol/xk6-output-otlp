@@ -1,16 +1,21 @@
 package otlp
 
 import (
+	"bufio"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/user"
 	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
-	providerFilename = "provider_id"
-	runFilename      = "run_id"
+	providerFilename  = "provider_id"
+	runFilename       = "run_id"
+	providerIDPattern = "^[0-9a-zA-Z_]{3,16}$"
 )
 
 var varPrefix string
@@ -31,11 +36,12 @@ type idAttrs struct {
 
 func newIdentities() (*idAttrs, error) {
 	var (
-		err  error
-		data []byte
-		prid string
-		rid  int
-		file *os.File
+		err      error
+		id       string
+		prid     string
+		rid      int
+		file     *os.File
+		comments []string
 	)
 
 	if _, err = os.Stat(varPrefix); os.IsNotExist(err) {
@@ -47,12 +53,12 @@ func newIdentities() (*idAttrs, error) {
 
 	path := filepath.Join(varPrefix, providerFilename)
 
-	data, err = os.ReadFile(path)
-
+	prid, _, err = readID(path, true)
 	if err != nil {
 		if os.IsNotExist(err) {
-			data = newProviderID()
-			err = os.WriteFile(path, data, 0666)
+			prid = string(newProviderID())
+			comments = []string{"# This is an auto-generated provider_id", ""}
+			err = os.WriteFile(path, []byte(strings.Join(append(comments, prid), "\n")), 0666)
 		}
 
 		if err != nil {
@@ -60,15 +66,13 @@ func newIdentities() (*idAttrs, error) {
 		}
 	}
 
-	prid = string(data)
-
 	path = filepath.Join(varPrefix, runFilename)
 
-	data, err = os.ReadFile(path)
+	id, comments, err = readID(path, false)
 	if err != nil {
 		rid = 1
 	} else {
-		rid, err = strconv.Atoi(string(data))
+		rid, err = strconv.Atoi(string(id))
 		if err != nil {
 			rid = 1
 		} else {
@@ -81,7 +85,10 @@ func newIdentities() (*idAttrs, error) {
 		return nil, err
 	}
 
-	_, err = file.WriteString(strconv.Itoa(rid))
+	if len(comments) == 0 {
+		comments = append(comments, "# This is a cycling counter in range 0..255", "")
+	}
+	_, err = file.WriteString(strings.Join(append(comments, strconv.Itoa(rid)), "\n"))
 	if err != nil {
 		return nil, err
 	}
@@ -103,4 +110,45 @@ func newProviderID() []byte {
 	}
 
 	return retval
+}
+
+func readID(path string, provider bool) (string, []string, error) {
+	comments := []string{}
+	file, err := os.Open(path)
+	if err != nil {
+		return "", comments, err
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		id := scanner.Text()
+		if id == "" || strings.HasPrefix(id, "#") {
+			// Preserve leading comments
+			comments = append(comments, id)
+			continue
+		}
+
+		if provider {
+			// No longer than 16 chars
+			if len(id) > 16 {
+				id = id[0:16]
+			}
+
+			if rx := regexp.MustCompile(providerIDPattern); !rx.Match([]byte(id)) {
+				return "", comments, fmt.Errorf("incorrect provider_id, must match /%s/ pattern", providerIDPattern)
+			}
+		} else {
+
+		}
+
+		return id, comments, nil
+	}
+
+	if err = scanner.Err(); err != nil {
+		return "", comments, nil
+	}
+
+	return "", comments, fmt.Errorf("no correct provider_id found in %s file", path)
 }
