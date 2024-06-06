@@ -87,7 +87,7 @@ Conversion a trend to OpenTelemetry histogram is an experimental feature.
 
 ### Attributes
 
-Some time it is required to distinguish metrics received from different test runs. For this scenario we have
+Sometimes it's required to distinguish metrics received from different test runs. For this scenario we have
 a configuration option that adds the following attributes/labels to the metrics:
 
 | Attribute     | Meaning |
