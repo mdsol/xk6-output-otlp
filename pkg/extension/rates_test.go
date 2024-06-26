@@ -1,4 +1,4 @@
-package otlp
+package extension
 
 import (
 	"testing"

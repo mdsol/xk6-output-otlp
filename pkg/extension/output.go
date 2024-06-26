@@ -1,33 +1,23 @@
-package otlp
+package extension
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/mdsol/xk6-output-otlp/pkg/exporter"
+	"github.com/mdsol/xk6-output-otlp/pkg/otlp"
 
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/attribute"
-
-	omhttp "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
-	om "go.opentelemetry.io/otel/metric"
-	ocm "go.opentelemetry.io/otel/sdk/metric"
-	ores "go.opentelemetry.io/otel/sdk/resource"
 
 	k6m "go.k6.io/k6/metrics"
 	"go.k6.io/k6/output"
 )
 
 var (
-	reader   *ocm.PeriodicReader
-	provider *ocm.MeterProvider
-	meter    om.Meter
-	ctx      = context.Background()
-	logger   logrus.FieldLogger
+	logger logrus.FieldLogger
 )
 
 type Output struct {
@@ -38,12 +28,10 @@ type Output struct {
 	config          *Config
 	now             func() time.Time
 	periodicFlusher *output.PeriodicFlusher
-	tsdb            map[k6m.TimeSeries]wrapper
 
-	client   *omhttp.Exporter
-	runCount om.Int64Counter
-	down     *atomic.Bool
-	ids      *idAttrs
+	otelMetrics sync.Map
+
+	down *atomic.Bool
 }
 
 func New(params output.Params) (*Output, error) {
@@ -55,7 +43,7 @@ func New(params output.Params) (*Output, error) {
 		WithField("json_config", c).WithError(err).
 		Debug("Params")
 
-	conf, err := joinConfig(params.JSONConfig, params.Environment)
+	conf, err := joinConfig(params.JSONConfig, params.Environment, params.Logger)
 	if err != nil {
 		return nil, err
 	}
@@ -76,55 +64,26 @@ func New(params output.Params) (*Output, error) {
 	}
 	params.Logger.WithFields(fields).Debug("OTEL Config")
 
-	expconf, err := conf.ExporterConfig()
+	expc, wrapc, err := conf.PartualConfigs()
 	if err != nil {
 		return nil, err
-	}
-
-	exp, err := exporter.New(expconf)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to initialize the OTLP exporter: %s", err.Error())
-	}
-
-	var ids *idAttrs
-
-	if conf.AddIDAttributes.Bool {
-		ids, err = newIdentities()
-		if err != nil {
-			return nil, fmt.Errorf("Failed to initialize ID attributes: %s", err.Error())
-		}
 	}
 
 	o := &Output{
 		ctx:    context.Background(),
 		logger: params.Logger,
-		client: exp,
 		config: &conf,
 		now:    time.Now,
-		tsdb:   make(map[k6m.TimeSeries]wrapper),
-		ids:    ids,
-	}
-	reader = ocm.NewPeriodicReader(exp,
-		ocm.WithInterval(conf.PushInterval.TimeDuration()),
-		ocm.WithTimeout(conf.Timeout.TimeDuration()))
-
-	attrs := []attribute.KeyValue{
-		{Key: "provider", Value: attribute.StringValue("k6")},
 	}
 
-	if conf.Script != "" {
-		attrs = append(attrs, attribute.String("script", conf.Script))
-	}
-
-	res := ores.NewSchemaless(attrs...)
-
-	provider = ocm.NewMeterProvider(
-		ocm.WithReader(reader),
-		ocm.WithResource(res),
-	)
-
-	meter = provider.Meter("K6")
 	o.down = &atomic.Bool{}
+
+	err = otlp.Init(wrapc, expc, params.Logger)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return o, nil
 }
 
@@ -134,10 +93,6 @@ func (o *Output) Description() string {
 
 func (o *Output) Start() error {
 	var err error
-	o.runCount, err = meter.Int64Counter("flush_metrics", om.WithDescription("The number of times the output flushed"))
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	d := o.config.PushInterval.TimeDuration()
 	periodicFlusher, err := output.NewPeriodicFlusher(d, o.flush)
@@ -146,7 +101,7 @@ func (o *Output) Start() error {
 	}
 	o.periodicFlusher = periodicFlusher
 
-	o.logger.WithField("flushtime", d).Debug("Output initialized")
+	o.logger.WithField("flush_time", d).Debug("Output initialized")
 	return nil
 }
 
@@ -156,13 +111,10 @@ func (o *Output) Stop() error {
 	o.logger.Debug("Stopping the output")
 	o.periodicFlusher.Stop()
 
-	err := provider.Shutdown(o.ctx)
+	err := otlp.Shutdown()
 	if err != nil {
 		o.logger.Error(err)
 	}
-
-	_ = o.client.ForceFlush(ctx)
-	_ = o.client.Shutdown(o.ctx)
 
 	return nil
 }
@@ -171,8 +123,6 @@ func (o *Output) flush() {
 	if o.down.Load() {
 		return
 	}
-
-	o.runCount.Add(o.ctx, 1)
 
 	samples := o.GetBufferedSamples()
 
@@ -187,21 +137,24 @@ func (o *Output) flush() {
 func (o *Output) applyMetrics(samplesContainers []k6m.SampleContainer) {
 	var err error
 
-	samples := joinRates(flatten(samplesContainers), o.config.RateConversion.String)
+	input := flatten(samplesContainers)
+	if o.config.RateConversion.String == "gauge" {
+		input = joinRates(input, o.config.RateConversion.String)
+	}
 
-	for _, s := range samples {
-		w, found := o.tsdb[s.TimeSeries]
+	for _, s := range input {
+		w, found := o.otelMetrics.Load(s.Metric.Name)
 		if !found {
-			w, err = newWrapper(o.logger, s, o.config, o.ids)
+			w, err = otlp.NewWrapper(s)
 			if err != nil {
 				o.logger.Errorf("Unable to wrap %s:[%v] metric\n", s.Metric.Name, s.Metric.Type)
 				continue
 			}
 
-			o.tsdb[s.TimeSeries] = w
+			o.otelMetrics.Store(s.Metric.Name, w)
 		}
 
-		err = w.apply(o.ctx, o.logger, &s)
+		err = w.(otlp.Wrapper).Record(o.ctx, o.logger, &s)
 		if err != nil {
 			o.logger.WithError(err).Errorf("Unable to apply %s:[%v] metric", s.Metric.Name, s.Metric.Type)
 		}

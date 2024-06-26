@@ -9,7 +9,7 @@
 			"timeout": "3s",
 			"gzip": true,
 			"insecure": true,
-			"rate_conversion": "gauge",
+			"rate_conversion": "counters",
 			"trend_conversion": "gauges",
 			"add_id_attributes": true
 		}

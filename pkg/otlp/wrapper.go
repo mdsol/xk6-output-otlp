@@ -12,43 +12,47 @@ import (
 	om "go.opentelemetry.io/otel/metric"
 )
 
-var wrapperCount = 1
+const DefaultMetricPrefix = "k6_"
 
-type wrapper interface {
-	apply(context.Context, logrus.FieldLogger, *k6m.Sample) error
+var (
+	wrapperCount = 0
+)
+
+type Wrapper interface {
+	Record(context.Context, logrus.FieldLogger, *k6m.Sample) error
 }
 
-func newWrapper(_ logrus.FieldLogger, s k6m.Sample, conf *Config, ids *idAttrs) (wrapper, error) {
+func NewWrapper(s k6m.Sample) (Wrapper, error) {
 	var err error
-	retval := &omWrapper{script: conf.Script, ids: ids}
+	retval := &omWrapper{script: params.script}
 
 	switch s.Metric.Type {
 	case k6m.Counter:
 		if s.Metric.Contains == k6m.Time {
-			retval.metric, err = meter.Float64Counter(s.Metric.Name, om.WithUnit("ms"))
+			retval.metric, err = meter.Float64Counter(metricName(&s), om.WithUnit("ms"))
 		} else {
-			retval.metric, err = meter.Int64Counter(s.Metric.Name, om.WithUnit("1"))
+			retval.metric, err = meter.Int64Counter(metricName(&s), om.WithUnit("1"))
 		}
 	case k6m.Gauge:
 		fallthrough
 	case k6m.Rate:
-		if conf.RateConversion.String == "gauge" {
-			retval.metric, err = meter.Float64Gauge(s.Metric.Name)
+		if params.rateConversion == "gauge" {
+			retval.metric, err = meter.Float64Gauge(metricName(&s))
 		} else {
-			retval.metric, err = meter.Float64Counter(s.Metric.Name)
+			retval.metric, err = meter.Float64Counter(metricName(&s))
 		}
 	case k6m.Trend:
 		if s.Metric.Contains == k6m.Time {
-			if conf.TrendConversion.String == "histogram" {
-				retval.metric, err = meter.Float64Histogram(s.Metric.Name, om.WithUnit("ms"))
+			if params.trendConversion == "histogram" {
+				retval.metric, err = meter.Float64Histogram(metricName(&s), om.WithUnit("ms"))
 			} else {
-				retval.metric, err = meter.Float64Gauge(s.Metric.Name, om.WithUnit("ms"))
+				retval.metric, err = meter.Float64Gauge(metricName(&s), om.WithUnit("ms"))
 			}
 		} else {
-			if conf.TrendConversion.String == "histogram" {
-				retval.metric, err = meter.Int64Histogram(s.Metric.Name, om.WithUnit("1"))
+			if params.trendConversion == "histogram" {
+				retval.metric, err = meter.Int64Histogram(metricName(&s), om.WithUnit("1"))
 			} else {
-				retval.metric, err = meter.Int64Gauge(s.Metric.Name, om.WithUnit("1"))
+				retval.metric, err = meter.Int64Gauge(metricName(&s), om.WithUnit("1"))
 			}
 		}
 	}
@@ -66,10 +70,9 @@ type omWrapper struct {
 	id     int
 	metric any
 	script string
-	ids    *idAttrs
 }
 
-func (w *omWrapper) apply(ctx context.Context, _ logrus.FieldLogger, s *k6m.Sample) error {
+func (w *omWrapper) Record(ctx context.Context, _ logrus.FieldLogger, s *k6m.Sample) error {
 	attrs := w.attributes(s.TimeSeries.Tags)
 	var (
 		ok       bool
@@ -115,7 +118,7 @@ func (w *omWrapper) apply(ctx context.Context, _ logrus.FieldLogger, s *k6m.Samp
 	}
 
 	if !ok {
-		return fmt.Errorf("OTel metric %s is not found", s.Metric.Name)
+		return fmt.Errorf("OTel metric %s is not found", metricName(s))
 	}
 
 	return nil
@@ -130,23 +133,22 @@ func recordFloatTrend(s *k6m.Sample, w *omWrapper, attrs []attribute.KeyValue) b
 			statPair := attribute.KeyValue{Key: "stat", Value: attribute.StringValue(temp)}
 			extAttrs := []attribute.KeyValue{statPair}
 			extAttrs = append(extAttrs, attrs...)
-			fg.Record(ctx, v, om.WithAttributes(extAttrs...))
+			fg.Record(params.ctx, v, om.WithAttributes(extAttrs...))
 		}
 	}
 
 	// Histogram scenario
 	fh, ok := w.metric.(om.Float64Histogram)
 	if ok {
-		fh.Record(ctx, s.Value, om.WithAttributes(attrs...))
+		fh.Record(params.ctx, s.Value, om.WithAttributes(attrs...))
 	}
 	return ok
 }
 
 func (w *omWrapper) attributes(tags *k6m.TagSet) []attribute.KeyValue {
-	retval := []attribute.KeyValue{
-		attribute.String("provider", "k6"),
-		attribute.String("script", w.script),
-	}
+	retval := []attribute.KeyValue{attribute.String("script", w.script)}
+
+	retval = append(retval, sessionAttrs...)
 
 	for key, value := range tags.Map() {
 		if key != "__name__" {
@@ -154,12 +156,9 @@ func (w *omWrapper) attributes(tags *k6m.TagSet) []attribute.KeyValue {
 		}
 	}
 
-	if w.ids != nil {
-		retval = append(retval,
-			attribute.String("provider_id", w.ids.providerID),
-			attribute.Int("run_id", int(w.ids.runID)),
-		)
-	}
-
 	return retval
+}
+
+func metricName(s *k6m.Sample) string {
+	return fmt.Sprintf("%s%s", DefaultMetricPrefix, s.Metric.Name)
 }
