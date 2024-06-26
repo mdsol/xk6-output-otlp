@@ -16,10 +16,6 @@ import (
 	"go.k6.io/k6/output"
 )
 
-var (
-	logger logrus.FieldLogger
-)
-
 type Output struct {
 	output.SampleBuffer
 
@@ -35,7 +31,6 @@ type Output struct {
 }
 
 func New(params output.Params) (*Output, error) {
-	logger = params.Logger
 	c, err := parseJSON(params.JSONConfig)
 
 	params.Logger.
@@ -124,6 +119,8 @@ func (o *Output) flush() {
 		return
 	}
 
+	o.logger.Debug("Flushing OTLP metrics...")
+
 	samples := o.GetBufferedSamples()
 
 	if len(samples) < 1 {
@@ -138,9 +135,6 @@ func (o *Output) applyMetrics(samplesContainers []k6m.SampleContainer) {
 	var err error
 
 	input := flatten(samplesContainers)
-	if o.config.RateConversion.String == "gauge" {
-		input = joinRates(input, o.config.RateConversion.String)
-	}
 
 	for _, s := range input {
 		w, found := o.otelMetrics.Load(s.Metric.Name)
@@ -154,9 +148,19 @@ func (o *Output) applyMetrics(samplesContainers []k6m.SampleContainer) {
 			o.otelMetrics.Store(s.Metric.Name, w)
 		}
 
-		err = w.(otlp.Wrapper).Record(o.ctx, o.logger, &s)
+		w.(otlp.Wrapper).Record(&s)
 		if err != nil {
 			o.logger.WithError(err).Errorf("Unable to apply %s:[%v] metric", s.Metric.Name, s.Metric.Type)
 		}
 	}
+}
+
+func flatten(containers []k6m.SampleContainer) []k6m.Sample {
+	retval := []k6m.Sample{}
+
+	for i := 0; i < len(containers); i++ {
+		retval = append(retval, containers[i].GetSamples()...)
+	}
+
+	return retval
 }

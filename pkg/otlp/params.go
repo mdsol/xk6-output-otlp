@@ -88,13 +88,5 @@ func Shutdown() error {
 		return err
 	}
 
-	err = exporter.ForceFlush(params.ctx)
-	if err != nil {
-		return err
-	}
-	err = exporter.Shutdown(params.ctx)
-	if err != nil {
-		return err
-	}
 	return nil
 }
