@@ -80,7 +80,7 @@ The latest pre-computed rate value should match appropriate K6 output.
 Each metric of type "trend" is converted to one OTLP histogram and
 a gauge which label `stat` will define pre-computed statistics.
 
-_Example: original K6 trend metric: `http_req_duration` produces `k6_http_req_duration{stat="ag|min|max|p50|p90|p95"}` metric family._
+_Example: original K6 trend metric: `http_req_duration` typically produces `k6_http_req_duration_stat{stat="avg|min|max|p50|p90|p95"}` metric family._
 
 The latest pre-computed stat values should match appropriate K6 output.
 
