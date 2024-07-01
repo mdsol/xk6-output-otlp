@@ -59,7 +59,7 @@ func New(params output.Params) (*Output, error) {
 	}
 	params.Logger.WithFields(fields).Debug("OTEL Config")
 
-	expc, wrapc, err := conf.PartualConfigs()
+	expc, wrapc, err := conf.PartialConfigs()
 	if err != nil {
 		return nil, err
 	}

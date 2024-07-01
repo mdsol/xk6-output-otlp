@@ -18,6 +18,30 @@ Please open a PR with your proposed change.
    ./bin/k6 run --out otlp --config <./samples/config.json> ./samples/test.js
    ```
 
+## Upload metrics to Vision sandbox
+
+Example of local configuration file (VPN Required):
+
+```yaml
+{
+	"collectors": {
+		"otlp": {
+			"metrics_url": "https://motel-collector-sandbox-metrics.telemetry.nonprod-medidata.net/v1/metrics",
+			"headers": {
+				"job": "tests"
+			},
+			"push_interval": "10s",
+			"timeout": "3s",
+			"gzip": true,
+			"insecure": false,
+			"rate_conversion": "gauge",
+			"trend_conversion": "histogram",
+			"add_id_attributes": true
+		}
+	}
+}
+```
+
 ## Tagging
 
 If the deployment creates AWS resources, please use the [Convention](./doc/resource-tagging-convention.md).

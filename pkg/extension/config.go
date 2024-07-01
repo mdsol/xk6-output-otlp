@@ -52,7 +52,7 @@ func NewConfig() Config {
 	}
 }
 
-func (c Config) PartualConfigs() (*exporter.Config, *otlp.Config, error) {
+func (c Config) PartialConfigs() (*exporter.Config, *otlp.Config, error) {
 	expc := &exporter.Config{
 		Timeout:         defaultTimeout,
 		Endpoint:        c.ServerURL.String,
