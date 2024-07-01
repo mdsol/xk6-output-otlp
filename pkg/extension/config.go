@@ -31,11 +31,9 @@ type Config struct {
 	Headers         map[string]string  `json:"headers"`
 	Insecure        null.Bool          `json:"insecure"`
 	PushInterval    types.NullDuration `json:"push_interval"`
-	RateConversion  null.String        `json:"rate_conversion"`
 	Script          string             `json:"-"`
 	ServerURL       null.String        `json:"metrics_url"`
 	Timeout         types.NullDuration `json:"timeout"`
-	TrendConversion null.String        `json:"trend_conversion"`
 }
 
 func NewConfig() Config {
@@ -44,11 +42,10 @@ func NewConfig() Config {
 		GZip:            null.BoolFrom(false),
 		Insecure:        null.BoolFrom(true),
 
-		PushInterval:    types.NullDurationFrom(defaultPushInterval),
-		ServerURL:       null.StringFrom(defaultServerURL),
-		Headers:         make(map[string]string),
-		Timeout:         types.NullDurationFrom(defaultTimeout),
-		TrendConversion: null.StringFrom(defaultTrendConversion),
+		PushInterval: types.NullDurationFrom(defaultPushInterval),
+		ServerURL:    null.StringFrom(defaultServerURL),
+		Headers:      make(map[string]string),
+		Timeout:      types.NullDurationFrom(defaultTimeout),
 	}
 }
 
@@ -73,12 +70,10 @@ func (c Config) PartialConfigs() (*exporter.Config, *otlp.Config, error) {
 	}
 
 	wrapc := &otlp.Config{
-		Script:          c.Script,
-		TrendConversion: c.TrendConversion.String,
-		RateConversion:  c.RateConversion.String,
-		Timeout:         c.Timeout.TimeDuration(),
-		PushInterval:    c.PushInterval.TimeDuration(),
-		UseIDs:          c.AddIDAttributes.Bool,
+		Script:       c.Script,
+		Timeout:      c.Timeout.TimeDuration(),
+		PushInterval: c.PushInterval.TimeDuration(),
+		UseIDs:       c.AddIDAttributes.Bool,
 	}
 
 	return expc, wrapc, nil
@@ -116,14 +111,6 @@ func (c Config) Apply(applied Config) Config {
 		c.AddIDAttributes = applied.AddIDAttributes
 	}
 
-	if applied.RateConversion.Valid {
-		c.RateConversion = applied.RateConversion
-	}
-
-	if applied.TrendConversion.Valid {
-		c.TrendConversion = applied.TrendConversion
-	}
-
 	return c
 }
 
@@ -144,14 +131,6 @@ func joinConfig(jsonRawConf json.RawMessage, env map[string]string, log logrus.F
 			return result, fmt.Errorf("parse environment variables options failed: %w", err)
 		}
 		result = result.Apply(envConf)
-	}
-
-	if result.RateConversion.String != "gauge" && result.RateConversion.String != "counters" {
-		return result, fmt.Errorf("invalid rate conversion: %s, must be 'gauge' or 'counters'", result.RateConversion.String)
-	}
-
-	if result.TrendConversion.String != "gauges" && result.TrendConversion.String != "histogram" {
-		return result, fmt.Errorf("invalid trend conversion: %s, must be 'gauges' or 'histogram'", result.TrendConversion.String)
 	}
 
 	dconf, _ := json.MarshalIndent(result, "", "  ")
@@ -206,14 +185,6 @@ func parseEnvs(env map[string]string) (Config, error) {
 
 	if url, urlDefined := env["K6_OTLP_SERVER_URL"]; urlDefined {
 		c.ServerURL = null.StringFrom(url)
-	}
-
-	if convtype, defined := env["K6_OTLP_TREND_CONVERSION"]; defined {
-		c.TrendConversion = null.StringFrom(convtype)
-	}
-
-	if convtype, defined := env["K6_OTLP_RATE_CONVERSION"]; defined {
-		c.RateConversion = null.StringFrom(convtype)
 	}
 
 	if headers, headersDefined := env["K6_OTLP_HTTP_HEADERS"]; headersDefined {

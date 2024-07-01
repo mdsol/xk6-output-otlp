@@ -34,8 +34,6 @@ Example of local configuration file (VPN Required):
 			"timeout": "3s",
 			"gzip": true,
 			"insecure": false,
-			"rate_conversion": "gauge",
-			"trend_conversion": "histogram",
 			"add_id_attributes": true
 		}
 	}

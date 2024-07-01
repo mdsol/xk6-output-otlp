@@ -3,6 +3,7 @@ package otlp
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	k6m "go.k6.io/k6/metrics"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -17,38 +18,27 @@ type Wrapper interface {
 	Record(*k6m.Sample)
 }
 
-func NewWrapper(s k6m.Sample) (Wrapper, error) {
+func NewWrapper(logger logrus.FieldLogger, s k6m.Sample) (Wrapper, error) {
 	var (
 		err    error
 		retval Wrapper
 	)
 	wrapperCount++
+	name := metricName(&s)
 
 	switch s.Metric.Type {
 	case k6m.Counter:
-		retval, err = newCounterWrapper(wrapperCount, metricName(&s), s.Metric.Contains == k6m.Time)
+		logger.Debugf("New OTLP for %s [counter]", name)
+		retval, err = newCounterWrapper(wrapperCount, name, s.Metric.Contains == k6m.Time)
 	case k6m.Gauge:
-		fallthrough
+		logger.Debugf("New OTLP for %s [gauge]", name)
+		retval, err = newGaugeWrapper(wrapperCount, name)
 	case k6m.Rate:
-		if params.rateConversion == "gauge" {
-			retval, err = newGaugeWrapper(wrapperCount, metricName(&s), true, false)
-		} else {
-			retval, err = newCounterWrapper(wrapperCount, metricName(&s), true)
-		}
+		logger.Debugf("New OTLP for %s [rate]", name)
+		retval, err = newRateWrapper(wrapperCount, name)
 	case k6m.Trend:
-		if s.Metric.Contains == k6m.Time {
-			if params.trendConversion == "histogram" {
-				retval, err = newHistogramWrapper(wrapperCount, metricName(&s), true)
-			} else {
-				retval, err = newGaugeWrapper(wrapperCount, metricName(&s), true, true)
-			}
-		} else {
-			if params.trendConversion == "histogram" {
-				retval, err = newHistogramWrapper(wrapperCount, metricName(&s), false)
-			} else {
-				retval, err = newGaugeWrapper(wrapperCount, metricName(&s), false, true)
-			}
-		}
+		logger.Debugf("New OTLP for %s [trend]", name)
+		retval, err = newTrendWrapper(wrapperCount, name, s.Metric.Contains == k6m.Time)
 	}
 
 	if err != nil {

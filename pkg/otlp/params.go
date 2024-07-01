@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
-	omhttp "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+
 	om "go.opentelemetry.io/otel/metric"
 	ocm "go.opentelemetry.io/otel/sdk/metric"
 	ores "go.opentelemetry.io/otel/sdk/resource"
@@ -19,7 +19,6 @@ var (
 	flushCount   om.Int64Counter
 	provider     *ocm.MeterProvider
 	meter        om.Meter
-	exporter     omhttp.Exporter
 	sessionAttrs = []attribute.KeyValue{
 		attribute.String("provider", "k6"),
 	}
@@ -37,11 +36,9 @@ func Init(conf *Config, expc *exp.Config, log logrus.FieldLogger) error {
 	var err error
 
 	params = &wrapParams{
-		ctx:             context.Background(),
-		script:          conf.Script,
-		trendConversion: conf.TrendConversion,
-		rateConversion:  conf.RateConversion,
-		log:             log,
+		ctx:    context.Background(),
+		script: conf.Script,
+		log:    log,
 	}
 
 	exporter, err := exp.New(expc)

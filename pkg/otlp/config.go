@@ -5,10 +5,8 @@ import (
 )
 
 type Config struct {
-	Script          string
-	TrendConversion string
-	RateConversion  string
-	Timeout         time.Duration
-	PushInterval    time.Duration
-	UseIDs          bool
+	Script       string
+	Timeout      time.Duration
+	PushInterval time.Duration
+	UseIDs       bool
 }

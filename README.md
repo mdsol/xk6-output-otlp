@@ -35,8 +35,6 @@ Example of configuration file:
       "timeout": "3s",
       "gzip": true,
       "insecure": true,
-      "rate_conversion": "counters",
-      "trend_conversion": "gauges",
       "add_id_attributes": true
     }
   }
@@ -53,8 +51,6 @@ Environment variables:
 | `K6_OTLP_INSECURE`         | `true`        | `true` or `false`. Validate SSL certificate or not. |
 | `K6_OTLP_PUSH_INTERVAL`    | `5s`          | Metric push interval in Go duration format for intermediate metrics. At the end on the test metrics exported regardless of this value. |
 | `K6_OTLP_TIMEOUT`          | `5s`          | HTTP request timeout  in Go duration format |
-| `K6_OTLP_RATE_CONVERSION`  | `counters`    | `counters` or `gauge`. Conversion type for metrics of type `rate`. |
-| `K6_OTLP_TREND_CONVERSION` | `gauges`      | `gauges` or `histogram`. Conversion type for metrics of type `trend`. |
 | `K6_OTLP_SERVER_URL`       | `http://localhost:8080/v1/metrics`| OTLP metrics endpoint url. Usually ends with `/v1/metrics` |
 
 ### Run K6 tests like
@@ -69,25 +65,24 @@ The Grafana K6 testing utility uses a metric model that requires some metrics co
 
 ### Rate
 
-A metric of type "rate" could be converted to a collection of counters (default) or a gauge, depending on the test configuration.
+Each metric of type "rate" is converted to three OTLP metrics.
 
-If the rate type conversion is `counter`, the converted metric is a pair of counters withe labels "value=0|1".
-To calculate actual rate value, in this case we need to make an equation:
+If `<name>` is a name of the original rate metric, it produces:
 
-```text
-rate = rate(counter{value==1} / (counter{value==1} + counter{value==0}))
-```
+- `k6_<name>_total` OTLP counter which contains the total number of occurrences;
+- `k6_<name>_success_total` OTLP counter which contains the total number of successful occurrences;
+- `k6_<name>_success_rate` OTLP Gauge, which contains the pre-computed rate. 
 
-If the rate type conversion is `gauge`, the result metric is a float gauge which value is pre-calculated.
+The latest pre-computed rate value should match appropriate K6 output.
 
 ### Trend
 
-A metric of type "trend" could be converted to a collection of gauges (default) or a histogram, depending on the test configuration.
+Each metric of type "trend" is converted to one OTLP histogram and
+a gauge which label `stat` will define pre-computed statistics.
 
-It is expected that using conversion to Gauges we get the same results we have in the test output.
-For each statistic type of the trend we add `stat` label with appropriate value (`min`, `max`, `avg`, `p90`, etc.).
+_Example: original K6 trend metric: `http_req_duration` produces `k6_http_req_duration{stat="ag|min|max|p50|p90|p95"}` metric family._
 
-Conversion a trend to OpenTelemetry histogram is an experimental feature.
+The latest pre-computed stat values should match appropriate K6 output.
 
 ### Attributes
 

@@ -139,7 +139,7 @@ func (o *Output) applyMetrics(samplesContainers []k6m.SampleContainer) {
 	for _, s := range input {
 		w, found := o.otelMetrics.Load(s.Metric.Name)
 		if !found {
-			w, err = otlp.NewWrapper(s)
+			w, err = otlp.NewWrapper(o.logger, s)
 			if err != nil {
 				o.logger.Errorf("Unable to wrap %s:[%v] metric\n", s.Metric.Name, s.Metric.Type)
 				continue

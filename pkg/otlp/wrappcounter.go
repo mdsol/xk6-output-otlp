@@ -40,11 +40,11 @@ type floatCounterWrapper struct {
 }
 
 func (w *intCounterWrapper) Record(s *k6m.Sample) {
-	attrs := attributes(s.TimeSeries.Tags)
-	w.metric.Add(params.ctx, int64(math.Floor(s.Value)), om.WithAttributes(attrs...))
+	attrs := om.WithAttributes(attributes(s.TimeSeries.Tags)...)
+	w.metric.Add(params.ctx, int64(math.Floor(s.Value)), attrs)
 }
 
 func (w *floatCounterWrapper) Record(s *k6m.Sample) {
-	attrs := attributes(s.TimeSeries.Tags)
-	w.metric.Add(params.ctx, s.Value, om.WithAttributes(attrs...))
+	attrs := om.WithAttributes(attributes(s.TimeSeries.Tags)...)
+	w.metric.Add(params.ctx, s.Value, attrs)
 }
