@@ -9,7 +9,7 @@ import (
 
 func newHistogramWrapper(id int, name string, isFloat bool) (Wrapper, error) {
 	if isFloat {
-		fmetric, err := meter.Float64Histogram(name, om.WithUnit("ms"))
+		fmetric, err := meter.Float64Histogram(name)
 		if err != nil {
 			return nil, err
 		}
@@ -17,7 +17,7 @@ func newHistogramWrapper(id int, name string, isFloat bool) (Wrapper, error) {
 		return &floatHistogramWrapper{id: id, metric: fmetric}, nil
 	}
 
-	imetric, err := meter.Int64Histogram(name, om.WithUnit("1"))
+	imetric, err := meter.Int64Histogram(name)
 	if err != nil {
 		return nil, err
 	}

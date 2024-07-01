@@ -9,7 +9,7 @@ import (
 
 func newCounterWrapper(id int, name string, isFloat bool) (Wrapper, error) {
 	if isFloat {
-		fmetric, err := meter.Float64Counter(name, om.WithUnit("ms"))
+		fmetric, err := meter.Float64Counter(name)
 		if err != nil {
 			return nil, err
 		}
@@ -19,7 +19,7 @@ func newCounterWrapper(id int, name string, isFloat bool) (Wrapper, error) {
 		}, nil
 	}
 
-	imetric, err := meter.Int64Counter(name, om.WithUnit("1"))
+	imetric, err := meter.Int64Counter(name)
 	if err != nil {
 		return nil, err
 	}

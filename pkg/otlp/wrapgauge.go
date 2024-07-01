@@ -11,7 +11,7 @@ import (
 
 func newGaugeWrapper(id int, name string, isFloat bool, isTrend bool) (Wrapper, error) {
 	if isFloat {
-		fmetric, err := meter.Float64Gauge(name, om.WithUnit("ms"))
+		fmetric, err := meter.Float64Gauge(name)
 		if err != nil {
 			return nil, err
 		}
@@ -22,7 +22,7 @@ func newGaugeWrapper(id int, name string, isFloat bool, isTrend bool) (Wrapper, 
 		}, nil
 	}
 
-	imetric, err := meter.Int64Gauge(name, om.WithUnit("1"))
+	imetric, err := meter.Int64Gauge(name)
 	if err != nil {
 		return nil, err
 	}

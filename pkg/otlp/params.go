@@ -55,8 +55,7 @@ func Init(conf *Config, expc *exp.Config, log logrus.FieldLogger) error {
 
 	flushCount, err = meter.Int64Counter(
 		fmt.Sprintf("%sflush_metrics", DefaultMetricPrefix),
-		om.WithDescription("The number of times the output flushed"),
-		om.WithUnit("1"))
+		om.WithDescription("The number of times the output flushed"))
 	if err != nil {
 		return err
 	}
