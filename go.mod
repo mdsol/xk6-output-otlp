@@ -3,15 +3,11 @@ module github.com/mdsol/xk6-output-otlp
 go 1.22
 
 require (
-	github.com/stretchr/testify v1.9.0
 	go.k6.io/k6 v0.51.0
 	gopkg.in/guregu/null.v3 v3.3.0
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
