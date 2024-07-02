@@ -8,14 +8,13 @@ The released binary is expected to run in containers or linux-like hosts of `amd
 For Windows 10+ environments you can run it in  WSL2.
 For other environments, please build your version from sources.
 
-### Get the pre-build extended K6 binary
+### Build K6 binary
 
-- Find the [latest release}(https://github.com/mdsol/xk6-output-otlp/releases).
-- Download `k6.tar.gz` archive, and extract the `k6` binary with
+You should have `Go 1.22+` and `make` installed.
 
-  ```sh
-  tar -xvzf k6.tar.gz
-  ```
+- clone the [repository](https://github.com/mdsol/xk6-output-otlp) using git;
+- run `make build`;
+- the `k6` binary is in the project's `./bin` subfolder.
 
 ### Configuration
 
@@ -71,7 +70,7 @@ If `<name>` is a name of the original rate metric, it produces:
 
 - `k6_<name>_total` OTLP counter which contains the total number of occurrences;
 - `k6_<name>_success_total` OTLP counter which contains the total number of successful occurrences;
-- `k6_<name>_success_rate` OTLP Gauge, which contains the pre-computed rate. 
+- `k6_<name>_success_rate` OTLP Gauge, which contains the pre-computed rate over the whole metric family. 
 
 The latest pre-computed rate value should match appropriate K6 output.
 
