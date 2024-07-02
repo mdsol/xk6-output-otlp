@@ -22,21 +22,21 @@ Please open a PR with your proposed change.
 
 Example of local configuration file (VPN Required):
 
-```yaml
+```json
 {
-	"collectors": {
-		"otlp": {
-			"metrics_url": "https://motel-collector-sandbox-metrics.telemetry.nonprod-medidata.net/v1/metrics",
-			"headers": {
-				"job": "tests"
-			},
-			"push_interval": "10s",
-			"timeout": "3s",
-			"gzip": true,
-			"insecure": false,
-			"add_id_attributes": true
-		}
-	}
+  "collectors": {
+    "otlp": {
+      "metrics_url": "https://motel-collector-sandbox-metrics.telemetry.nonprod-medidata.net/v1/  metrics",
+      "headers": {
+        "job": "tests"
+      },
+      "push_interval": "10s",
+      "timeout": "3s",
+      "gzip": true,
+      "insecure": false,
+      "add_id_attributes": true
+    }
+  }
 }
 ```
 
