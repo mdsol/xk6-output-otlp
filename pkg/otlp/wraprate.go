@@ -8,7 +8,7 @@ import (
 )
 
 func newRateWrapper(id int, name string) (Wrapper, error) {
-	metricTotal, err := meter.Int64Counter(name)
+	metricTotal, err := meter.Int64Counter(name + "_total")
 	if err != nil {
 		return nil, err
 	}
@@ -42,10 +42,9 @@ type rateWrapper struct {
 func (w *rateWrapper) Record(s *k6m.Sample) {
 	attrs := om.WithAttributes(attributes(s.TimeSeries.Tags)...)
 
-	w.metricRate.Record(params.ctx, w.rate.combine(s), attrs)
-	w.metricTotal.Add(params.ctx, int64(math.Floor(s.Value)))
+	// Here we count rate over whole metric family as we see the result in the K6 output.
+	w.metricRate.Record(params.ctx, w.rate.combine(s), om.WithAttributes(sessionAttrs...))
 
-	if s.Value == 1 {
-		w.metricSuccess.Add(params.ctx, int64(math.Floor(s.Value)), attrs)
-	}
+	w.metricTotal.Add(params.ctx, 1, attrs)
+	w.metricSuccess.Add(params.ctx, int64(math.Floor(s.Value)), attrs)
 }

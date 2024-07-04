@@ -5,19 +5,19 @@ import (
 )
 
 type rate struct {
-	sum   float64
-	count float64
+	sum     float64
+	counter float64
 }
 
 func (r *rate) value() float64 {
-	if r.count == 0 {
+	if r.counter == 0 {
 		return 0
 	}
-	return r.sum / r.count
+	return r.sum / r.counter
 }
 
 func (r *rate) combine(sample *k6m.Sample) float64 {
-	r.count += 1.0
+	r.counter += 1.0
 	r.sum += sample.Value
 	return r.value()
 }
