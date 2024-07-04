@@ -42,7 +42,7 @@ type rateWrapper struct {
 func (w *rateWrapper) Record(s *k6m.Sample) {
 	attrs := om.WithAttributes(attributes(s.TimeSeries.Tags)...)
 
-	// Here we count rate ove whole metric family as we see the result in the K6 output.
+	// Here we count rate over whole metric family as we see the result in the K6 output.
 	w.metricRate.Record(params.ctx, w.rate.combine(s), om.WithAttributes(sessionAttrs...))
 
 	w.metricTotal.Add(params.ctx, 1, attrs)
