@@ -39,7 +39,3 @@ Example of local configuration file (VPN Required):
   }
 }
 ```
-
-## Tagging
-
-If the deployment creates AWS resources, please use the [Convention](./doc/resource-tagging-convention.md).
