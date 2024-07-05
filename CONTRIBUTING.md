@@ -26,7 +26,7 @@ Example of local configuration file (VPN Required):
 {
   "collectors": {
     "otlp": {
-      "metrics_url": "https://motel-collector-sandbox-metrics.telemetry.nonprod-medidata.net/v1/  metrics",
+      "metrics_url": "http(s)://<opentelemetry-collector>/v1/metrics",
       "headers": {
         "job": "tests"
       },
