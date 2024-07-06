@@ -26,7 +26,7 @@ Example of local configuration file (VPN Required):
 {
   "collectors": {
     "otlp": {
-      "metrics_url": "https://motel-collector-sandbox-metrics.telemetry.nonprod-medidata.net/v1/  metrics",
+      "metrics_url": "http(s)://<opentelemetry-collector>/v1/metrics",
       "headers": {
         "job": "tests"
       },
@@ -39,7 +39,3 @@ Example of local configuration file (VPN Required):
   }
 }
 ```
-
-## Tagging
-
-If the deployment creates AWS resources, please use the [Convention](./doc/resource-tagging-convention.md).

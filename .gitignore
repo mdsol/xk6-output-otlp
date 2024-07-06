@@ -26,3 +26,5 @@ go.work.sum
 bin/*
 
 __debug_bin*
+
+**/.DS_Store
