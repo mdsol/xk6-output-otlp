@@ -21,8 +21,11 @@ jobs:
     env: {}
 
     steps:
-      - name: CI
-        uses: ./.github/workflows/ci.yml
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Go
+        uses: ./.github/workflows/go
 
       - name: Build
         run: make clean lint prepare build pack ß
