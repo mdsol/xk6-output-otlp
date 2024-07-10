@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Go
-        uses: ./.github/workflows/go
+        uses: ./.github/workflows/composite/go
 
       - name: Build
         run: make clean lint prepare build pack ß

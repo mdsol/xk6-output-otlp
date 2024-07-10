@@ -1,0 +1,18 @@
+name: Go
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Go
+    uses: actions/setup-go@v5
+    with:
+      go-version: '1.22'
+
+    - name: golangci-lint
+    uses: golangci/golangci-lint-action@v6
+    with:
+      version: v1.58.2
+      args: --verbose --concurrency=2 --timeout=600s
+
+    - name: Test with the Go CLI
+    run: go test -v ./...
