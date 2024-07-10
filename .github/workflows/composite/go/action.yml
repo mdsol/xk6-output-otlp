@@ -15,4 +15,5 @@ runs:
         args: --verbose --concurrency=2 --timeout=600s
 
     - name: Test with the Go CLI
+      shell: bash
       run: go test -v ./...
