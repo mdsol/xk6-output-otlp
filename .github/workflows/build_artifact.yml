@@ -28,7 +28,7 @@ jobs:
         uses: ./.github/workflows/composite/go
 
       - name: Build
-        run: make clean lint prepare build pack ß
+        run: make clean lint prepare build pack
       
       - name: Environment
         run: |
