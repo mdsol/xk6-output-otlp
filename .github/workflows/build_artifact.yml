@@ -1,0 +1,44 @@
+name: Build Artifact
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - v*
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: [ ubuntu-latest ]
+
+    concurrency:
+      # Cancel intermediate builds
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    env: {}
+
+    steps:
+      - name: CI
+        uses: ./github/workflows/ci.yaml
+
+      - name: Build
+        run: make clean lint prepare build pack ß
+      
+      - name: Environment
+        run: |
+          echo "GOARCH=$(go env GOARCH)" >> $GITHUB_ENV
+          echo "GOOS=$(go env GOOS)" >> $GITHUB_ENV
+          echo "BRANCH=$(echo ${{ github.ref_name }} | tr -C '[a-z0-9-\n]' '_')" >> $GITHUB_ENV
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-${{env.GOARCH}}-${{env.GOOS}}-${{ env.BRANCH }}.tar.gz
+          path: ./bin/*.tar.gz
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 3    # we need it just for releases
+          compression-level: 0 # this is already a gzipped archive

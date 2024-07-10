@@ -18,11 +18,9 @@ import (
 )
 
 const (
-	defaultServerURL       = "http://localhost:8080/v1/metrics"
-	defaultTimeout         = 5 * time.Second
-	defaultPushInterval    = 5 * time.Second
-	defaultRateConversion  = "counters"
-	defaultTrendConversion = "gauges"
+	defaultServerURL    = "http://localhost:8080/v1/metrics"
+	defaultTimeout      = 5 * time.Second
+	defaultPushInterval = 5 * time.Second
 )
 
 type Config struct {

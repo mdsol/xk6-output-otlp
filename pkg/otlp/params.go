@@ -25,11 +25,9 @@ var (
 )
 
 type wrapParams struct {
-	ctx             context.Context
-	script          string
-	trendConversion string
-	rateConversion  string
-	log             logrus.FieldLogger
+	ctx    context.Context
+	script string
+	log    logrus.FieldLogger
 }
 
 func Init(conf *Config, expc *exp.Config, log logrus.FieldLogger) error {
