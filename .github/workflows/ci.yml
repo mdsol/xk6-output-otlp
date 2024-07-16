@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     paths:
-      - '.github/workflows/*.yml'
+      - '.github/workflows/**.yml'
       - 'pkg/**'
       - go.mod
       - go.sum
