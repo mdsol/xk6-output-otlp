@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     paths:
-      - .github/workflows/ci.yml
-      - pkg/**
+      - '.github/workflows/**.yml'
+      - 'pkg/**'
       - go.mod
       - go.sum
       - Makefile
@@ -25,18 +25,9 @@ jobs:
     env: {}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
+      - name: Go
+        uses: ./.github/workflows/composite/go
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: v1.58.2
-          args: --verbose --concurrency=2 --timeout=600s
-
-      - name: Test with the Go CLI
-        run: go test -v ./...
